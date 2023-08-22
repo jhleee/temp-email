@@ -1,9 +1,9 @@
 <script>
-  import Button from "./Button.svelte";
-  import { createAccount, getMessages, getMessage } from "./libs/mailer.js";
+  import { createAccount, getMessages, getMessage } from "./lib/mailer.js";
 
   let account;
   let messages = [];
+  let lastupdate = 0;
 
   async function getAccount() {
     account = await createAccount();
@@ -12,11 +12,12 @@
 
   async function refreshMessage() {
     messages = await getMessages(account.token);
+    lastupdate = new Date();
     console.log(messages);
   }
 
   async function showContent(id) {
-    let m = messages.find(x => x.id === id);
+    let m = messages.find((x) => x.id === id);
     if (!m.content) {
       m.content = await getMessage(id, account.token);
     }
@@ -25,44 +26,49 @@
   }
 
   async function hideContent(id) {
-    let m = messages.find(x => x.id === id);
+    let m = messages.find((x) => x.id === id);
     m.show = false;
     messages = [...messages];
   }
 </script>
 
-
-
 <main>
-	<h1>Temp Email</h1>
-  {#if account}
-	<div class="account-box">
-    <div class="email">
-      <span class="text">{account.address}</span>
+  <h1>Temp Email</h1>
+  {#if account?.address}
+    <div class="account-box">
+      <div class="email">
+        <span class="text">{account.address}</span>
+      </div>
     </div>
-  </div>
-  <button class="btn" on:click={refreshMessage}>📩 Get Message</button>
+    <button class="btn" on:click={refreshMessage}>📩 Get Message</button>
+    {#if lastupdate}
+      <small>Last updated: {lastupdate.toLocaleString()}</small>
+    {/if}
   {:else}
-  <button class="btn" on:click={getAccount}>Get Account</button>
+    <button class="btn" on:click={getAccount}>Get Account</button>
   {/if}
   {#each messages as msg}
-  <div class="message-box">
-    <div class="title">
-      <span class="from">{msg.from.address}</span>
-      <span class="subject">{msg.subject}</span>
-      <span class="time">{new Date(msg.updatedAt).toLocaleString()}</span>
+    <div class="message-box">
+      <div class="title">
+        <span class="from">{msg.from.address}</span>
+        <span class="subject">{msg.subject}</span>
+        <span class="time">{new Date(msg.updatedAt).toLocaleString()}</span>
+        {#if msg.show}
+          <button on:click={() => hideContent(msg.id)}>Hide</button>
+        {:else}
+          <button on:click={() => showContent(msg.id)}>Show</button>
+        {/if}
+      </div>
       {#if msg.show}
-        <button on:click={()=>hideContent(msg.id)}>Hide</button>
-      {:else}
-        <button on:click={()=>showContent(msg.id)}>Show</button>
+        <div class="content">
+          {msg.content?.text}
+        </div>
       {/if}
     </div>
-    {#if msg.show}
-    <div class="content">
-      {msg.content?.text}
-    </div>
+  {:else}
+    {#if account}
+      <p>No Message.</p>
     {/if}
-  </div>
   {/each}
 </main>
 
