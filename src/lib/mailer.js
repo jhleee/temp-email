@@ -25,7 +25,7 @@ async function _createAccount() {
     while (--tryCount > 0) {
       try {
         param = {
-          address: getId() + "@pretreer.com",
+          address: getId() + "@hldrive.com",
           password: getPw()
         };
         let { data } = await axios.post("https://api.mail.tm/accounts", param);
